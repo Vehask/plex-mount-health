@@ -1,176 +1,244 @@
-# Plex Mount Health Check Monitor
+# 🔍 Plex Mount Health Monitor
 
-A robust Python script designed to monitor the health of mounted storage used by Plex media servers. This script performs comprehensive checks on mount points and sends email alerts when issues are detected.
+[![Python](https://img.shields.io/badge/Python-3.6+-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-Linux-orange.svg)](https://www.linux.org/)
 
-## Features
+> A robust monitoring solution for Plex media server storage mounts with automated email alerts
 
-- **Mount Point Validation**: Checks if mount points exist and are properly mounted
-- **Read/Write Testing**: Performs actual file operations to verify mount accessibility
-- **Email Notifications**: Configurable email alerts with cooldown periods
-- **Comprehensive Logging**: Rotating log files with configurable levels
-- **Free Space Monitoring**: Optional disk space threshold monitoring
-- **Critical Directory Checking**: Ensures important directories exist
-- **Dry Run Mode**: Test functionality without making changes
-- **Debug Mode**: Verbose output for troubleshooting
-- **Failure Threshold**: Only sends alerts after consecutive failures
-- **Flexible Configuration**: All settings controlled via configuration file
+## 📋 Table of Contents
 
-## Requirements
+- [Features](#-features)
+- [Quick Start](#-quick-start)
+- [Installation](#-installation)
+- [Configuration](#-configuration)
+- [Usage](#-usage)
+- [Health Checks](#-health-checks)
+- [Email Setup](#-email-setup)
+- [Running as Service](#-running-as-service)
+- [Troubleshooting](#-troubleshooting)
+- [Security](#-security)
 
-- Python 3.6 or higher
-- Standard Python libraries (no additional packages required)
-- Linux system with `/proc/mounts` support
-- SMTP server access for email notifications
+## ✨ Features
 
-## Installation
+- 🔄 **Continuous Mount Monitoring** - Real-time health checks of storage mounts
+- 📧 **Email Alerts** - Configurable notifications when issues are detected
+- 🔒 **Secure Password Storage** - External password files for enhanced security
+- 📊 **Comprehensive Logging** - Rotating logs with configurable levels
+- 🧪 **Test Functionality** - SMTP connection testing and email verification
+- ⚙️ **Flexible Configuration** - All settings controlled via configuration file
+- 🚀 **Systemd Integration** - Run as a background service
+- 🔍 **Multiple Health Checks** - Mount existence, accessibility, read/write tests
+- 📁 **Critical Directory Monitoring** - Ensures important directories exist
+- 🛡️ **Failure Threshold Management** - Prevents alert spam with consecutive failure tracking
 
-1. Copy the script files to your Plex VM:
+## 🚀 Quick Start
+
+1. **Clone and install:**
    ```bash
-   # Place files in a suitable directory, e.g.:
-   sudo mkdir -p /opt/plex-mount-health
-   sudo cp plex_mount_health.py /opt/plex-mount-health/
-   sudo cp plex_mount_health.conf /opt/plex-mount-health/
-   sudo chmod +x /opt/plex-mount-health/plex_mount_health.py
+   git clone <repository-url>
+   cd plex-mount-health-check
+   sudo bash setup.sh
    ```
 
-2. Edit the configuration file:
+2. **Configure email settings:**
    ```bash
    sudo nano /opt/plex-mount-health/plex_mount_health.conf
    ```
 
-## Configuration
+3. **Test your setup:**
+   ```bash
+   cd /opt/plex-mount-health
+   python3 plex_mount_health.py --test-smtp
+   python3 plex_mount_health.py --test-email
+   ```
 
-### Quick Start Configuration
+4. **Start monitoring:**
+   ```bash
+   sudo systemctl enable plex-mount-health.service
+   sudo systemctl start plex-mount-health.service
+   ```
 
-Edit the following essential settings in `plex_mount_health.conf`:
+## 📦 Installation
+
+### Requirements
+
+- Python 3.6 or higher
+- Linux system with `/proc/mounts` support
+- SMTP server access for email notifications
+
+### Automatic Installation
+
+```bash
+sudo bash setup.sh
+```
+
+The setup script will:
+- ✅ Install files to `/opt/plex-mount-health/`
+- ✅ Create systemd service
+- ✅ Set proper permissions
+- ✅ Test script syntax
+- ✅ Optionally create secure password file
+
+### Manual Installation
+
+```bash
+# Create installation directory
+sudo mkdir -p /opt/plex-mount-health
+
+# Copy files
+sudo cp plex_mount_health.py /opt/plex-mount-health/
+sudo cp plex_mount_health.conf /opt/plex-mount-health/
+sudo chmod +x /opt/plex-mount-health/plex_mount_health.py
+sudo chmod 600 /opt/plex-mount-health/plex_mount_health.conf
+```
+
+## ⚙️ Configuration
+
+### Quick Configuration
+
+Edit the main configuration file:
+
+```bash
+sudo nano /opt/plex-mount-health/plex_mount_health.conf
+```
+
+**Essential Settings:**
 
 ```ini
 [Mount Settings]
-# Update this to your actual mount path
 mount_path = /mnt/your-storage-path
 
-[Logging]
-# Choose a suitable log location
-log_path = /var/log/plex_mount_health.log
-
 [Email Settings]
-# Configure your email settings
 smtp_server = smtp.gmail.com
+smtp_port = 587
+smtp_use_tls = true
 smtp_username = your_email@gmail.com
-smtp_password = your_app_password
+smtp_password_file = /opt/plex-mount-health/.email_password
 from_email = your_email@gmail.com
 to_emails = admin@yourdomain.com
-
-[Email Test Settings]
-# Enable test email on startup (optional)
-send_test_email_on_startup = false
 ```
 
-### Complete Configuration Options
+### Configuration Sections
 
-#### Mount Settings
-- `mount_path`: Path to the mounted storage (required)
-- `mount_timeout`: Timeout for mount operations in seconds (default: 30)
-- `test_file`: Name of test file created during health checks
-- `check_interval`: Seconds between health checks in continuous mode (default: 300)
+| Section | Description |
+|---------|-------------|
+| **Mount Settings** | Mount path, check intervals, test file settings |
+| **Logging** | Log file location, levels, rotation settings |
+| **Script Behavior** | Debug mode, dry-run, failure thresholds |
+| **Email Settings** | SMTP configuration and notification settings |
+| **Email Test Settings** | Test email automation and customization |
+| **Advanced Settings** | Critical directories, mount options |
 
-#### Logging
-- `log_path`: Path to log file (default: /var/log/plex_mount_health.log)
-- `log_level`: DEBUG, INFO, WARNING, ERROR, CRITICAL (default: INFO)
-- `max_log_size`: Maximum log size in MB before rotation (default: 10)
-- `log_backup_count`: Number of backup log files to keep (default: 5)
-
-#### Script Behavior
-- `debug`: Enable verbose output (true/false)
-- `dry_run`: Simulate actions without making changes (true/false)
-- `max_failures`: Consecutive failures before sending alert (default: 3)
-- `email_cooldown`: Seconds between email alerts (default: 3600)
-
-#### Email Settings
-- `email_enabled`: Enable/disable email notifications (true/false)
-- `smtp_server`: SMTP server hostname
-- `smtp_port`: SMTP server port (default: 587)
-- `smtp_use_tls`: Use TLS encryption (true/false)
-- `smtp_username`: SMTP authentication username
-- `smtp_password`: SMTP authentication password
-- `from_email`: Sender email address
-- `to_emails`: Comma-separated list of recipient emails
-- `email_subject_prefix`: Prefix for email subjects
-
-#### Email Test Settings
-- `send_test_email_on_startup`: Send test email when starting continuous monitoring (true/false)
-- `test_email_interval_hours`: Send periodic test emails every N hours (0 to disable)
-- `test_email_subject`: Custom subject for test emails
-- `test_email_body`: Custom body for test emails
-
-#### Advanced Settings
-- `required_mount_options`: Comma-separated mount options to verify
-- `check_processes`: Check for processes using the mount (true/false)
-- `critical_directories`: Comma-separated list of required directories
-
-## Usage
+## 💻 Usage
 
 ### Command Line Options
 
 ```bash
-# Run a single check and exit
+# Run single check and exit
 python3 plex_mount_health.py --once
 
-# Run with custom configuration file
-python3 plex_mount_health.py -c /path/to/custom.conf
+# Test SMTP connection (recommended first step)
+python3 plex_mount_health.py --test-smtp
+
+# Send test email
+python3 plex_mount_health.py --test-email
 
 # Run continuous monitoring (default)
 python3 plex_mount_health.py
 
-# Send test email (uses config file test email settings)
-python3 plex_mount_health.py --test-email
+# Use custom configuration file
+python3 plex_mount_health.py -c /path/to/custom.conf
 
 # Show help
 python3 plex_mount_health.py --help
 ```
 
-### Running as a Service
+### Example Output
 
-Create a systemd service for continuous monitoring:
+```
+INFO - Starting mount health check for: /mnt/storage
+INFO - Mount Existence: PASS - Mount point exists and is mounted
+INFO - Mount Accessibility: PASS - Mount is accessible for read/write operations
+INFO - Read/Write Test: PASS - Read/write test successful
+INFO - Critical Directories: PASS - All critical directories exist
+INFO - Mount health check PASSED
+```
 
-1. Create service file:
-   ```bash
-   sudo nano /etc/systemd/system/plex-mount-health.service
-   ```
+## 🔍 Health Checks
 
-2. Add service configuration:
-   ```ini
-   [Unit]
-   Description=Plex Mount Health Monitor
-   After=network.target
-   Wants=network.target
+The monitor performs these checks on each cycle:
 
-   [Service]
-   Type=simple
-   User=root
-   Group=root
-   WorkingDirectory=/opt/plex-mount-health
-   ExecStart=/usr/bin/python3 /opt/plex-mount-health/plex_mount_health.py
-   Restart=always
-   RestartSec=30
+| Check | Description | Failure Actions |
+|-------|-------------|-----------------|
+| **🔗 Mount Existence** | Verifies mount point exists and is mounted | Immediate alert |
+| **🔓 Mount Accessibility** | Tests read and write permissions | Immediate alert |
+| **📝 Read/Write Test** | Creates, writes, reads, and deletes test file | Immediate alert |
+| **📁 Critical Directories** | Verifies important directories exist | Configurable alert |
 
-   [Install]
-   WantedBy=multi-user.target
-   ```
+## 📧 Email Setup
 
-3. Enable and start the service:
-   ```bash
-   sudo systemctl daemon-reload
-   sudo systemctl enable plex-mount-health.service
-   sudo systemctl start plex-mount-health.service
-   ```
+### Recommended: External SMTP Provider
 
-4. Check service status:
-   ```bash
-   sudo systemctl status plex-mount-health.service
-   ```
+#### Gmail Setup
+1. Enable 2-Factor Authentication
+2. Generate App Password: [Google Account → Security → App passwords](https://myaccount.google.com/apppasswords)
+3. Configure:
 
-### Running with Cron
+```ini
+[Email Settings]
+smtp_server = smtp.gmail.com
+smtp_port = 587
+smtp_use_tls = true
+smtp_username = your_email@gmail.com
+smtp_password_file = /opt/plex-mount-health/.email_password
+```
+
+#### Other Providers
+
+| Provider | SMTP Server | Port | TLS |
+|----------|-------------|------|-----|
+| **Outlook** | `smtp-mail.outlook.com` | 587 | Yes |
+| **Yahoo** | `smtp.mail.yahoo.com` | 587 | Yes |
+| **Custom/ISP** | `mail.yourisp.com` | 25/587 | Varies |
+
+### Secure Password Setup
+
+```bash
+# Create secure password file
+echo "your_email_password" | sudo tee /opt/plex-mount-health/.email_password
+
+# Secure the file
+sudo chmod 600 /opt/plex-mount-health/.email_password
+sudo chown root:root /opt/plex-mount-health/.email_password
+```
+
+### Test Email Features
+
+- 🧪 **Manual Test**: `--test-email` parameter
+- 🚀 **Startup Test**: `send_test_email_on_startup = true`
+- ⏰ **Periodic Tests**: `test_email_interval_hours = 24`
+- ✏️ **Custom Messages**: Configurable subject and body
+
+## 🔄 Running as Service
+
+### Systemd Service (Recommended)
+
+```bash
+# Enable automatic startup
+sudo systemctl enable plex-mount-health.service
+
+# Start the service
+sudo systemctl start plex-mount-health.service
+
+# Check status
+sudo systemctl status plex-mount-health.service
+
+# View logs
+sudo journalctl -u plex-mount-health.service -f
+```
+
+### Cron Alternative
 
 For periodic checks instead of continuous monitoring:
 
@@ -182,182 +250,124 @@ crontab -e
 */5 * * * * /usr/bin/python3 /opt/plex-mount-health/plex_mount_health.py --once
 ```
 
-## Health Checks Performed
-
-1. **Mount Existence**: Verifies the mount path exists and is actually mounted
-2. **Mount Accessibility**: Tests read and write permissions
-3. **Read/Write Test**: Creates, writes, reads, and deletes a test file
-4. **Critical Directories**: Verifies important directories exist (if configured)
-
-## Email Configuration
-
-### Email Setup Options
-
-#### Option 1: External SMTP Provider (Recommended)
-Use Gmail, Outlook, or your ISP's SMTP server:
-
-```ini
-[Email Settings]
-# Gmail example
-smtp_server = smtp.gmail.com
-smtp_port = 587
-smtp_use_tls = true
-smtp_username = your_email@gmail.com
-smtp_password_file = /opt/plex-mount-health/.email_password
-from_email = your_email@gmail.com
-to_emails = admin@yourdomain.com
-
-# Outlook example
-smtp_server = smtp-mail.outlook.com
-smtp_port = 587
-smtp_use_tls = true
-smtp_username = your_email@outlook.com
-smtp_password_file = /opt/plex-mount-health/.email_password
-```
-
-#### Option 2: Install Local Mail Server in VM
-Install and configure a mail server like Postfix in the VM:
-```bash
-sudo apt-get update
-sudo apt-get install postfix mailutils
-```
-
-Then configure for local relay:
-```ini
-[Email Settings]
-smtp_server = localhost
-smtp_port = 25
-smtp_use_tls = false
-smtp_username =
-smtp_password =
-from_email = plex@yourdomain.com
-to_emails = admin@yourdomain.com
-```
-
-### Secure Password Configuration
-
-For security, store email passwords in a separate file instead of the config file:
-
-```bash
-# Create secure password file
-echo "your_email_password" | sudo tee /opt/plex-mount-health/.email_password
-
-# Secure the file permissions
-sudo chmod 600 /opt/plex-mount-health/.email_password
-sudo chown root:root /opt/plex-mount-health/.email_password
-```
-
-Configure the password file path in your config:
-```ini
-[Email Settings]
-smtp_password_file = /opt/plex-mount-health/.email_password
-# smtp_password = # Leave this commented out for security
-```
-
-### Email Notifications
-
-The script sends email alerts when:
-- Mount health checks fail
-- The failure threshold is reached (configurable)
-- Cooldown period has elapsed since last alert
-- Test emails (if configured)
-
-Email content includes:
-- Timestamp and hostname
-- Detailed failure information
-- Results of all health checks
-
-### Test Email Features
-
-- **Manual Test**: Use `--test-email` parameter to send a test email
-- **Startup Test**: Configure `send_test_email_on_startup = true` to verify email on service start
-- **Periodic Tests**: Set `test_email_interval_hours` to send regular test emails
-- **Custom Test Messages**: Configure custom subject and body for test emails
-
-## Logging
-
-All activities are logged with timestamps:
-- Successful health checks
-- Failure details
-- Email notifications sent
-- Configuration errors
-- System errors
-
-Log files are automatically rotated when they reach the configured size limit.
-
-## Troubleshooting
+## 🛠️ Troubleshooting
 
 ### Common Issues
 
-1. **Permission Errors**
-   - Ensure the script runs with appropriate permissions
-   - Check mount point ownership and permissions
+<details>
+<summary>🔧 Email Authentication Errors</summary>
 
-2. **Email Authentication Errors**
-   - Use app passwords for Gmail accounts
-   - Verify SMTP server settings
-   - Check firewall rules for SMTP ports
+**Symptoms:** Authentication failures, login errors
 
-3. **Mount Detection Issues**
-   - Verify mount path is correct
-   - Check if mount is actually mounted: `mount | grep your-path`
-   - Ensure `/proc/mounts` is accessible
+**Solutions:**
+- Use app passwords for Gmail/Outlook
+- Verify SMTP server settings
+- Check firewall rules for SMTP ports
+- Test with `--test-smtp` command
 
-4. **Test File Creation Failures**
-   - Check write permissions on mount point
-   - Verify sufficient disk space
-   - Ensure mount is not read-only
+</details>
 
+<details>
+<summary>🔧 Mount Detection Issues</summary>
+
+**Symptoms:** Mount not detected, false negatives
+
+**Solutions:**
+- Verify mount path is correct
+- Check if mount is actually mounted: `mount | grep your-path`
+- Ensure `/proc/mounts` is accessible
+- Test with `--once` command in debug mode
+
+</details>
+
+<details>
+<summary>🔧 Permission Errors</summary>
+
+**Symptoms:** Cannot create test files, access denied
+
+**Solutions:**
+- Run script with appropriate permissions
+- Check mount point ownership and permissions
+- Verify mount is not read-only
+- Check filesystem space availability
+
+</details>
 
 ### Debug Mode
 
-Enable debug mode in the configuration:
+Enable detailed troubleshooting:
+
 ```ini
 [Script Behavior]
 debug = true
 ```
 
-This provides verbose output showing:
-- Configuration values loaded
-- Each health check step
-- Detailed error messages
+This provides:
+- ✅ Configuration values loaded
+- ✅ Each health check step details
+- ✅ Detailed error messages
+- ✅ SMTP connection diagnostics
 
 ### Dry Run Mode
 
-Test the script without making changes:
+Test without making changes:
+
 ```ini
 [Script Behavior]
 dry_run = true
 ```
 
-This simulates all operations without:
-- Creating test files
-- Sending actual emails
-- Making any modifications
+## 🔒 Security
 
-## Security Considerations
+### Best Practices
 
-- Store the configuration file with restricted permissions: `chmod 600 plex_mount_health.conf`
-- **Use password files instead of storing passwords in config**: `smtp_password_file`
-- Use app passwords for Gmail instead of main account passwords
-- Secure password files: `chmod 600` and `chown root:root`
-- Regularly rotate email passwords
-- Review log files for security events
+- 🔐 **Use password files** instead of storing passwords in config
+- 🔒 **Secure file permissions**: `chmod 600` for sensitive files
+- 🔑 **Use app passwords** for email providers
+- 📋 **Regular password rotation**
+- 📊 **Monitor log files** for security events
 
-## Version History
+### File Permissions
 
-- **v1.0**: Initial release with comprehensive mount health checking
+```bash
+# Configuration file
+sudo chmod 600 /opt/plex-mount-health/plex_mount_health.conf
 
-## Support
+# Password file
+sudo chmod 600 /opt/plex-mount-health/.email_password
+sudo chown root:root /opt/plex-mount-health/.email_password
 
-For issues or questions:
-1. Check the log files for error details
-2. Enable debug mode for verbose output
-3. Test with dry run mode first
-4. Verify mount point manually using system commands
+# Script executable
+sudo chmod +x /opt/plex-mount-health/plex_mount_health.py
+```
 
-## License
+## 📊 Example Configurations
 
-This script is provided as-is for use with Plex media servers. Modify as needed for your environment.#   p l e x - m o u n t - h e a l t h 
- 
- 
+See [`email_config_examples.conf`](email_config_examples.conf) for complete working examples of:
+
+- Gmail setup with app passwords
+- Outlook/Hotmail configuration  
+- Custom SMTP server setup
+- Secure password file usage
+
+## 📜 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 🆘 Support
+
+If you encounter issues:
+
+1. 📋 Check the log files for error details
+2. 🐛 Enable debug mode for verbose output  
+3. 🧪 Test with dry run mode first
+4. 🔧 Verify mount point manually using system commands
+5. 📧 Test email configuration with `--test-smtp`
+
+---
+
+**Made with ❤️ for Plex server administrators**
