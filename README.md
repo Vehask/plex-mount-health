@@ -36,14 +36,14 @@
 
 1. **Clone and install:**
    ```bash
-   git clone <repository-url>
-   cd plex-mount-health-check
+   git clone https://github.com/Vehask/plex-mount-health.git
+   cd plex-mount-health
    sudo bash setup.sh
    ```
 
 2. **Configure email settings:**
    ```bash
-   sudo nano /opt/plex-mount-health/plex_mount_health.conf
+   sudo nano /opt/plex_mount_health.conf
    ```
 
 3. **Test your setup:**
@@ -66,19 +66,6 @@
 - Python 3.6 or higher
 - Linux system with `/proc/mounts` support
 - SMTP server access for email notifications
-
-### Automatic Installation
-
-```bash
-sudo bash setup.sh
-```
-
-The setup script will:
-- ✅ Install files to `/opt/plex-mount-health/`
-- ✅ Create systemd service
-- ✅ Set proper permissions
-- ✅ Test script syntax
-- ✅ Optionally create secure password file
 
 ### Manual Installation
 
@@ -121,14 +108,14 @@ to_emails = admin@yourdomain.com
 
 ### Configuration Sections
 
-| Section | Description |
-|---------|-------------|
-| **Mount Settings** | Mount path, check intervals, test file settings |
-| **Logging** | Log file location, levels, rotation settings |
-| **Script Behavior** | Debug mode, dry-run, failure thresholds |
-| **Email Settings** | SMTP configuration and notification settings |
-| **Email Test Settings** | Test email automation and customization |
-| **Advanced Settings** | Critical directories, mount options |
+|         Section          |                    Description                  |
+|--------------------------|-------------------------------------------------|
+| **Mount Settings**       | Mount path, check intervals, test file settings |
+| **Logging**              | Log file location, levels, rotation settings    |
+| **Script Behavior**      | Debug mode, dry-run, failure thresholds         |
+| **Email Settings**       | SMTP configuration and notification settings    |
+| **Email Test Settings**  | Test email automation and customization         |
+| **Advanced Settings**    | Critical directories, mount options             |
 
 ## 💻 Usage
 
@@ -169,12 +156,12 @@ INFO - Mount health check PASSED
 
 The monitor performs these checks on each cycle:
 
-| Check | Description | Failure Actions |
-|-------|-------------|-----------------|
-| **🔗 Mount Existence** | Verifies mount point exists and is mounted | Immediate alert |
-| **🔓 Mount Accessibility** | Tests read and write permissions | Immediate alert |
-| **📝 Read/Write Test** | Creates, writes, reads, and deletes test file | Immediate alert |
-| **📁 Critical Directories** | Verifies important directories exist | Configurable alert |
+|              Check            |                  Description                 |   Failure Actions   |
+|-------------------------------|----------------------------------------------|---------------------|
+| **🔗 Mount Existence**       | Verifies mount point exists and is mounted    | Immediate alert    |
+| **🔓 Mount Accessibility**   | Tests read and write permissions              | Immediate alert    |
+| **📝 Read/Write Test**       | Creates, writes, reads, and deletes test file | Immediate alert    |
+| **📁 Critical Directories**  | Verifies important directories exist          | Configurable alert |
 
 ## 📧 Email Setup
 
@@ -206,7 +193,8 @@ smtp_password_file = /opt/plex-mount-health/.email_password
 
 ```bash
 # Create secure password file
-echo "your_email_password" | sudo tee /opt/plex-mount-health/.email_password
+sudo nano /opt/plex-mount-health/.email_password
+your_password_here
 
 # Secure the file
 sudo chmod 600 /opt/plex-mount-health/.email_password
@@ -225,6 +213,27 @@ sudo chown root:root /opt/plex-mount-health/.email_password
 ### Systemd Service (Recommended)
 
 ```bash
+# Create service file
+sudo nano /etc/systemd/system/plex-mount-health.service
+
+# Add to service file and set correct paths
+[Unit]
+Description=Plex Mount Health Monitor
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/path/to/plex-mount-health
+ExecStart=/usr/bin/python3 /path/to/plex-mount-health/plex-mount-health.py
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
+
 # Enable automatic startup
 sudo systemctl enable plex-mount-health.service
 
