@@ -358,5 +358,6 @@ For issues or questions:
 
 ## License
 
-This script is provided as-is for use with Plex media servers. Modify as needed for your environment.#   p l e x - m o u n t - h e a l t h  
+This script is provided as-is for use with Plex media servers. Modify as needed for your environment.#   p l e x - m o u n t - h e a l t h 
+ 
  
